@@ -27,12 +27,13 @@
   </style>
 </head>
 <body>
+  <a href="/" aria-label="返回主页" style="display:none;"></a>
   <div id="main">
     <div id="map"></div>
     <div id="bar"></div>
   </div>
-
   <script>
+    window.__ECHARTS_DISABLE_INLINE_STYLE__ = true;
     const mapChart = echarts.init(document.getElementById('map'));
     const barChart = echarts.init(document.getElementById('bar'));
 
