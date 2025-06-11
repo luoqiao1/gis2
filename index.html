@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>天津人口流动仪表盘</title>
+  <script src="https://cdn.staticfile.org/echarts/5.4.3/echarts.min.js"></script>
+  <style>
+    html, body {
+      margin: 0; height: 100%; background-color: #1f2d3d; font-family: "Microsoft YaHei", sans-serif;
+    }
+    #main {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+    }
+    #map {
+      flex: 0.8; /* 减小地图比例 */
+      height: 100%;
+    }
+    #bar {
+      flex: 1.4; /* 增大条形图比例 */
+      height: 100%;
+      padding-left: 30px;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div id="main">
+    <div id="map"></div>
+    <div id="bar"></div>
+  </div>
+
+  <script>
+    const mapChart = echarts.init(document.getElementById('map'));
+    const barChart = echarts.init(document.getElementById('bar'));
+
+    const areaData = [
+      { name: '和平区', value: 45.2, genRate: 7.2, tag: '核心商圈/高端服务业' },
+      { name: '河东区', value: 32.6, genRate: 12.4, tag: '商务办公/住宅混合区' },
+      { name: '河西区', value: 36.5, genRate: 11.8, tag: '政务/文化机构集中区' },
+      { name: '南开区', value: 34.8, genRate: 15.3, tag: '教育科研/商业中心' },
+      { name: '河北区', value: 27.8, genRate: 38.5, tag: '传统居民区与商业混合' },
+      { name: '红桥区', value: 25.4, genRate: 42.1, tag: '传统商贸/交通枢纽' },
+      { name: '滨海新区', value: 38.7, genRate: 9.3, tag: '外资企业聚集区/港口经济' },
+      { name: '东丽区', value: 23.1, genRate: 43.2, tag: '制造业基地/空港经济' },
+      { name: '西青区', value: 29.5, genRate: 32.8, tag: '高校/科技园区/电子产业' },
+      { name: '津南区', value: 17.6, genRate: 55.1, tag: '城郊过渡带/职业教育基地' },
+      { name: '北辰区', value: 12.3, genRate: 63.7, tag: '物流产业区/装备制造业' },
+      { name: '武清区', value: 14.5, genRate: 58.3, tag: '高新技术产业/电商物流' },
+      { name: '宝坻区', value: 9.8, genRate: 67.4, tag: '现代农业/环保产业' },
+      { name: '宁河区', value: 8.4, genRate: 71.9, tag: '农业主导区/食品加工' },
+      { name: '静海区', value: 7.6, genRate: 74.2, tag: '循环经济/健康产业' },
+      { name: '蓟州区', value: 6.2, genRate: 76.5, tag: '山区旅游村落/生态保护' }
+    ];
+
+    // 模拟街道数据，注意每个区都加了街道列表，街道名长度更真实
+    const streetDataMap = {
+      '和平区': [
+        { name: '南京路街道', value: 12.1 },
+        { name: '赤峰道街道', value: 10.5 },
+        { name: '五大道街道', value: 7.6 },
+        { name: '南营门街道', value: 15.0 },
+        { name: '解放南路街道', value: 5.0 }
+      ],
+      '河东区': [
+        { name: '八纬路街道', value: 14.2 },
+        { name: '西沽街道', value: 8.1 },
+        { name: '津滨大道街道', value: 10.3 },
+        { name: '金钟街道', value: 6.5 },
+        { name: '京津路街道', value: 9.7 }
+      ],
+      '河西区': [
+        { name: '友谊路街道', value: 11.3 },
+        { name: '解放路街道', value: 14.7 },
+        { name: '红旗路街道', value: 6.8 },
+        { name: '尖山街道', value: 7.9 },
+        { name: '跃进路街道', value: 8.2 }
+      ],
+      '南开区': [
+        { name: '水上公园街道', value: 13.5 },
+        { name: '鼓楼街道', value: 9.8 },
+        { name: '南开街道', value: 10.1 },
+        { name: '密云路街道', value: 6.9 },
+        { name: '黄河道街道', value: 7.3 }
+      ],
+      '河北区': [
+        { name: '京津公路街道', value: 11.0 },
+        { name: '常州道街道', value: 14.4 },
+        { name: '铁西里街道', value: 5.5 },
+        { name: '石家庄路街道', value: 6.1 },
+        { name: '新华道街道', value: 9.0 }
+      ],
+      '红桥区': [
+        { name: '红桥街道', value: 13.1 },
+        { name: '西沽街道', value: 7.8 },
+        { name: '西青街道', value: 9.5 },
+        { name: '建新街道', value: 8.6 },
+        { name: '二纬路街道', value: 7.3 }
+      ],
+      '滨海新区': [
+        { name: '塘沽街道', value: 14.0 },
+        { name: '汉沽街道', value: 13.2 },
+        { name: '大港街道', value: 11.4 },
+        { name: '开发区街道', value: 9.9 },
+        { name: '海滨街道', value: 8.5 }
+      ],
+      '东丽区': [
+        { name: '大毕庄街道', value: 12.5 },
+        { name: '金钟街道', value: 7.7 },
+        { name: '华明街道', value: 8.3 },
+        { name: '新立街道', value: 9.1 },
+        { name: '华苑街道', value: 6.6 }
+      ],
+      '西青区': [
+        { name: '杨柳青街道', value: 15.1 },
+        { name: '王稳庄街道', value: 12.4 },
+        { name: '大寺街道', value: 7.5 },
+        { name: '精武镇街道', value: 8.9 },
+        { name: '海泰发展区街道', value: 5.2 }
+      ],
+      '津南区': [
+        { name: '双港街道', value: 14.8 },
+        { name: '辛庄街道', value: 11.3 },
+        { name: '葛沽街道', value: 10.7 },
+        { name: '八里台街道', value: 6.4 },
+        { name: '小站街道', value: 4.7 }
+      ],
+      '北辰区': [
+        { name: '双街镇街道', value: 13.0 },
+        { name: '北辰镇街道', value: 14.2 },
+        { name: '大张庄街道', value: 11.1 },
+        { name: '宜兴埠街道', value: 7.3 },
+        { name: '双口镇街道', value: 5.6 }
+      ],
+      '武清区': [
+        { name: '杨村街道', value: 12.6 },
+        { name: '京津新城街道', value: 14.3 },
+        { name: '夏光街道', value: 9.9 },
+        { name: '东蒲洼街道', value: 7.7 },
+        { name: '下朱庄街道', value: 6.8 }
+      ],
+      '宝坻区': [
+        { name: '宝平街道', value: 13.9 },
+        { name: '宝安街道', value: 11.8 },
+        { name: '宝兴街道', value: 7.2 },
+        { name: '宝华街道', value: 6.5 },
+        { name: '宝仪街道', value: 5.1 }
+      ],
+      '宁河区': [
+        { name: '芦台镇街道', value: 14.5 },
+        { name: '大碱厂镇街道', value: 11.6 },
+        { name: '韩家墅镇街道', value: 8.9 },
+        { name: '小王庄镇街道', value: 6.7 },
+        { name: '长芦镇街道', value: 5.8 }
+      ],
+      '静海区': [
+        { name: '静海镇街道', value: 13.2 },
+        { name: '芦台镇街道', value: 10.4 },
+        { name: '陈官屯镇街道', value: 9.0 },
+        { name: '大邱庄镇街道', value: 7.6 },
+        { name: '台头镇街道', value: 5.9 }
+      ],
+      '蓟州区': [
+        { name: '盘山镇街道', value: 14.6 },
+        { name: '下营镇街道', value: 11.1 },
+        { name: '黄庄镇街道', value: 9.4 },
+        { name: '东光镇街道', value: 7.2 },
+        { name: '东外环街道', value: 6.3 }
+      ]
+    };
+
+    mapChart.showLoading();
+    fetch('https://raw.githubusercontent.com/luoqiao1/gis1/main/120000_full.json')
+      .then(res => res.json())
+      .then(geoJson => {
+        mapChart.hideLoading();
+        echarts.registerMap('tianjin', geoJson);
+
+        const sortedData = [...areaData].sort((a, b) => b.value - a.value);
+
+        mapChart.setOption({
+          backgroundColor: '#1f2d3d',
+          title: {
+            text: '天津各区流动人口分布',
+            left: 'center',
+            top: 20,
+            textStyle: { color: '#fff', fontSize: 22 }
+          },
+          tooltip: {
+            trigger: 'item',
+            formatter: params => {
+              const d = areaData.find(a => a.name === params.name);
+              if (!d) return params.name;
+              return `${params.name}<br/>人口流入（万人）：${d.value}<br/>传承率：${d.genRate}%<br/>标签：${d.tag}`;
+            }
+          },
+          visualMap: {
+            min: 5,
+            max: 50,
+            left: 'right',
+            top: 'center',
+            calculable: true,
+            inRange: {
+              color: ['#50a3ba', '#eac736', '#d94e5d']
+            },
+            textStyle: { color: '#fff' }
+          },
+          series: [
+            {
+              name: '天津',
+              type: 'map',
+              map: 'tianjin',
+              roam: true,
+              emphasis: { label: { show: true } },
+              data: areaData.map(item => ({ name: item.name, value: item.value }))
+            }
+          ]
+        });
+
+        // 默认显示第一个区的街道数据
+        updateBarChart(sortedData[0].name);
+
+        // 地图点击事件，切换右侧条形图
+        mapChart.on('click', params => {
+          if (!params.name) return;
+          if (!streetDataMap[params.name]) return;
+          updateBarChart(params.name);
+        });
+      });
+
+    function updateBarChart(areaName) {
+      const streetData = streetDataMap[areaName] || [];
+      barChart.setOption({
+        backgroundColor: '#1f2d3d',
+        title: {
+          text: `${areaName}街道人口流动比例`,
+          left: 'center',
+          top: 20,
+          textStyle: { color: '#fff', fontSize: 20 }
+        },
+        grid: {
+          left: '25%', // 调整左边距，避免街道名遮挡
+          right: '10%',
+          top: 60,
+          bottom: 40
+        },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: { type: 'shadow' },
+          formatter: function(params) {
+            if (params.length) {
+              const p = params[0];
+              return `${p.name}<br/>人口流入（万人）：${p.value}`;
+            }
+            return '';
+          }
+        },
+        xAxis: {
+          type: 'value',
+          axisLine: { lineStyle: { color: '#ccc' } },
+          splitLine: { show: false }
+        },
+        yAxis: {
+          type: 'category',
+          data: streetData.map(d => d.name),
+          axisLine: { lineStyle: { color: '#ccc' } },
+          axisTick: { show: false },
+          axisLabel: {
+            color: '#ccc',
+            fontSize: 12,
+            formatter: function(value) {
+              return value.length > 6 ? value.slice(0, 6) + '…' : value; // 超过6字加省略号
+            }
+          }
+        },
+        series: [{
+          type: 'bar',
+          data: streetData.map(d => d.value),
+          itemStyle: { color: '#3398DB' },
+          barWidth: '40%'
+        }]
+      });
+    }
+  </script>
+</body>
+</html>
